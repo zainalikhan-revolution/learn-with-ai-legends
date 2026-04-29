@@ -1,5 +1,4 @@
-# learn-with-ai-legends
-AI tutoring platform where students learn from Einstein, Curie &amp; more — with 3D visuals, Mind Maps &amp; Live Vision. Built with Claude Opus 4.7.
+
 # 🏛️ Learn with AI Legends
 ### Learn from Einstein. Think like Curie. Built with Claude Opus 4.7.
 #### Anthropic Built with Opus 4.7 Global Hackathon — April 2026
