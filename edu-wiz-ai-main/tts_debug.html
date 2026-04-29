@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTS Debugger V1</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #111;
+            color: #0f0;
+            padding: 20px;
+        }
+
+        .box {
+            border: 1px solid #333;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background: #222;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            background: #000;
+            color: #fff;
+            border: 1px solid #555;
+            margin-top: 5px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        pre {
+            background: #000;
+            padding: 10px;
+            border: 1px solid #444;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            color: #0f0;
+        }
+
+        .error {
+            color: #f55;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔊 TTS Debugger V1</h1>
+    <p>Use this tool to test if the SERVER can generate Urdu Audio.</p>
+
+    <div class="box">
+        <h3>1. Test Configuration</h3>
+        <label>Backend URL:</label>
+        <input type="text" id="apiUrl" value="api-v50.php?action=tts">
+
+        <label>Message to Speak:</label>
+        <textarea id="textPayload" rows="3">آپ کیسے ہیں؟ میں آپ کی مدد کر سکتا ہوں۔</textarea>
+
+        <label>Language Hint (Force Server):</label>
+        <select id="langHint">
+            <option value="ur">Urdu (ur)</option>
+            <option value="en">English (en)</option>
+            <option value="">Auto-Detect (None)</option>
+        </select>
+
+        <button onclick="testTTS()">▶️ Test Generate Audio</button>
+    </div>
+
+    <div class="box">
+        <h3>2. Result / Output</h3>
+        <div id="status">Ready...</div>
+        <br>
+        <audio id="audioPlayer" controls style="width: 100%; display: none;"></audio>
+        <h4>Raw Server Response:</h4>
+        <pre id="output">Waiting for test...</pre>
+    </div>
+
+    <script>
+        async function testTTS() {
+            const url = document.getElementById('apiUrl').value;
+            const text = document.getElementById('textPayload').value;
+            const hint = document.getElementById('langHint').value;
+            const status = document.getElementById('status');
+            const output = document.getElementById('output');
+            const player = document.getElementById('audioPlayer');
+
+            status.textContent = "⏳ Sending Request...";
+            player.style.display = 'none';
+            output.textContent = "Loading...";
+
+            try {
+                const payload = {
+                    text: text,
+                    languageHint: hint
+                };
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const textRes = await res.text();
+
+                try {
+                    const data = JSON.parse(textRes);
+                    output.textContent = JSON.stringify(data, null, 2);
+
+                    if (data.audioContent) {
+                        status.innerHTML = "<span class='success'>✅ SUCCESS: Audio Generated!</span>";
+                        player.src = "data:audio/mp3;base64," + data.audioContent;
+                        player.style.display = 'block';
+                        player.play();
+                    } else if (data.error) {
+                        status.innerHTML = "<span class='error'>❌ SERVER ERROR: " + data.error + "</span>";
+                    } else {
+                        status.innerHTML = "<span class='error'>⚠️ UNKNOWN RESPONSE (No Audio)</span>";
+                    }
+
+                } catch (e) {
+                    output.textContent = "INVALID JSON:\n" + textRes;
+                    status.innerHTML = "<span class='error'>💀 FATAL: Invalid JSON received. PHP might be crashing.</span>";
+                }
+
+            } catch (err) {
+                console.error(err);
+                status.innerHTML = "<span class='error'>❌ NETWORK ERROR: " + err.message + "</span>";
+                output.textContent = err.stack;
+            }
+        }
+    </script>
+</body>
+
+</html>
